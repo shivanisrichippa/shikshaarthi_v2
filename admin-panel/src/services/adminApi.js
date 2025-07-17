@@ -160,8 +160,31 @@ export const submissionAPI = {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return handleResponse(response);
+    },
+
+
+
+    // --- RENTAL INTEREST specific functions ---
+    getRentalInterestNotifications: async () => {
+        const token = getAuthToken();
+        if (!token) throw new Error("Authentication required.");
+        const response = await fetch(`${REWARDS_API_URL}/admin/notifications/rental-interest`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return handleResponse(response);
+    },
+
+    getRentalInterestDetails: async (notificationId) => {
+        const token = getAuthToken();
+        if (!token) throw new Error("Authentication required.");
+        const response = await fetch(`${REWARDS_API_URL}/admin/notifications/rental-interest/${notificationId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return handleResponse(response);
     }
 };
+// ==========================================================
+// MESS INTEREST API (rewards-service)  
 
 // ===================================
 // COIN API (rewards-service)

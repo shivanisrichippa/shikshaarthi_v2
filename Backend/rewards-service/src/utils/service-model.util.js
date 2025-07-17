@@ -1,3 +1,4 @@
+//rewards-service/src/utils/service-model.util.js
 const { getDbConnection } = require('../config/db');
 const logger = require('../config/logger');
 

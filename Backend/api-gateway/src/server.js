@@ -15,6 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const REWARDS_SERVICE_URL = process.env.REWARDS_SERVICE_URL || 'http://localhost:3002';
+const RENTAL_SERVICE_URL = process.env.RENTAL_SERVICE_URL || 'http://localhost:3003';
 
 console.log(`[Gateway] AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}`);
 console.log(`[Gateway] REWARDS_SERVICE_URL: ${REWARDS_SERVICE_URL}`);
@@ -61,7 +62,9 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
     targets: {
       authService: AUTH_SERVICE_URL,
-      rewardsService: REWARDS_SERVICE_URL
+      rewardsService: REWARDS_SERVICE_URL,
+      rentalService: RENTAL_SERVICE_URL
+      
     }
   });
 });
@@ -153,7 +156,7 @@ const createProxyOptions = (target, serviceName) => ({
 // Create proxy instances
 const authServiceProxy = createProxyMiddleware(createProxyOptions(AUTH_SERVICE_URL, 'Auth Service'));
 const rewardsServiceProxy = createProxyMiddleware(createProxyOptions(REWARDS_SERVICE_URL, 'Rewards Service'));
-
+const rentalServiceProxy = createProxyMiddleware(createProxyOptions(RENTAL_SERVICE_URL, 'Rewards Service'));
 // --- ROUTING RULES ---
 
 // Auth service routes
@@ -173,6 +176,13 @@ app.use('/api/rewards', (req, res, next) => {
   console.log(`[Gateway] 🎁 Routing ${req.method} ${req.originalUrl} to Rewards Service`);
   rewardsServiceProxy(req, res, next);
 });
+
+// Rewards service routes
+app.use('/api/rentals', (req, res, next) => {
+  console.log(`[Gateway] 🎁 Routing ${req.method} ${req.originalUrl} to Rental Service`);
+  rentalServiceProxy(req, res, next);
+});
+
 
 // 404 Handler for unmatched routes
 app.use((req, res) => {
@@ -215,6 +225,7 @@ const server = app.listen(PORT, () => {
   console.log(`📡 Proxying /api/auth/** to ${AUTH_SERVICE_URL}`);
   console.log(`👑 Proxying /api/admin/** to ${AUTH_SERVICE_URL}`);
   console.log(`🎁 Proxying /api/rewards/** to ${REWARDS_SERVICE_URL}`);
+  console.log(`-> Proxying /api/rentals to ${RENTAL_SERVICE_URL}`); 
   console.log(`❤️  Health check available at http://localhost:${PORT}/health`);
   console.log(`\n🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
