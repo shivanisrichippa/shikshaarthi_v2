@@ -254,7 +254,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format']
@@ -281,6 +280,19 @@ const userSchema = new mongoose.Schema({
   district: { type: String, required: [true, 'District is required'], trim: true },
   tehsil: { type: String, required: [true, 'Tehsil is required'], trim: true },
   pincode: { type: String, required: [true, 'Pincode is required'], match: [/^\d{6}$/, 'Invalid pincode'] },
+ 
+  // --- THE FIX: Add the GeoJSON location field ---
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // Standard: [longitude, latitude]
+      default: [0, 0] // Default to a neutral point if lookup fails
+    }
+  },
 
   // --- Account & Status Management ---
   role: {

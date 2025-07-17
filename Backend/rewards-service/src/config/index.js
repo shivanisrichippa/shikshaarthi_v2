@@ -1,3 +1,4 @@
+//rewards-service/src/config/index.js
 const path = require('path');
 const dotenv = require('dotenv');
 
@@ -32,8 +33,11 @@ const commonConfig = {
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   SERVICE_NAME: process.env.SERVICE_NAME || 'Rewards Service',
   SERVICE_URL: process.env.SERVICE_URL || 'http://localhost:3002',
+  RENTAL_SERVICE_URL: process.env.RENTAL_SERVICE_URL || 'http://localhost:3003',
   AUTH_SERVICE_URL: process.env.AUTH_SERVICE_URL,
   INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
+  LOCATIONIQ_API_KEY:process.env.LOCATIONIQ_API_KEY || 'pk.e4d111b79f5b9b99353735d425bd6cff', 
+  
   CLOUDINARY: {
     CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     API_KEY: process.env.CLOUDINARY_API_KEY,
@@ -73,7 +77,9 @@ const requiredConfig = [
   'CLOUDINARY.CLOUD_NAME', 'CLOUDINARY.API_KEY', 'CLOUDINARY.API_SECRET',
   'DB_URIS.rewards', 'DB_URIS.mess', 'DB_URIS.rental', 
   'DB_URIS.plumber', 'DB_URIS.electrician', 'DB_URIS.laundry', 'DB_URIS.medical',
-  'KAFKA_BROKERS', 'KAFKA_CLIENT_ID', 'KAFKA_SUBMISSION_TOPIC','JWT_EXPIRES_IN', 'JWT_REFRESH_SECRET','JWT_REFRESH_EXPIRES_IN', 'SERVICE_NAME', 'SERVICE_URL'
+  'KAFKA_BROKERS', 'KAFKA_CLIENT_ID', 'KAFKA_SUBMISSION_TOPIC','JWT_EXPIRES_IN', 'JWT_REFRESH_SECRET','JWT_REFRESH_EXPIRES_IN', 'SERVICE_NAME', 'SERVICE_URL','LOCATIONIQ_API_KEY',
+  'RENTAL_SERVICE_URL', // Added for consistency with other services
+  // Added for consistency with other services
 ];
 
 function validateConfig(cfg) {

@@ -118,6 +118,7 @@ const requiredVars = [
   'RAZORPAY_KEY_SECRET',
   'SUBSCRIPTION_PRICE',
   'SUBSCRIPTION_DURATION_DAYS',
+  'LOCATIONIQ_API_KEY'
 ];
 
 // Check for missing variables and log them
@@ -177,6 +178,9 @@ module.exports = {
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173', // Default for local dev
 
   BCRYPT_ROUNDS: parseInt(process.env.BCRYPT_ROUNDS, 10) || 10,
+
+
+  LOCATIONIQ_API_KEY: process.env.LOCATIONIQ_API_KEY || 'pk.e4d111b79f5b9b99353735d425bd6cff', // Default for local dev
 
   // Supercoin related (defaults, can be overridden by env)
   COINS_LOGIN_BONUS: parseInt(process.env.COINS_LOGIN_BONUS, 10) || 50,
