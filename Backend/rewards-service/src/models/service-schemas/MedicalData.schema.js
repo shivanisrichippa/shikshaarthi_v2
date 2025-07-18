@@ -1,4 +1,5 @@
-// backend/rewards-service/src/models/service-schemas/MedicalData.schema.js
+
+//rewards-service/src/models/service-schemas/MedicalData.schema.js
 const mongoose = require('mongoose');
 
 const medicalDataSchema = new mongoose.Schema({
@@ -13,17 +14,17 @@ const medicalDataSchema = new mongoose.Schema({
   address: { type: String, required: [true, "Address is required"], trim: true },
   area: { type: String, trim: true, default: "" },
   landmark: { type: String, trim: true, default: "" },
-  pincode: { /* ... validation ... */ type: String, required: true, trim: true, validate: { validator: (v) => /^\d{6}$/.test(v), message: 'Pincode must be 6 digits.'}},
+  pincode: { type: String, required: true, trim: true, validate: { validator: (v) => /^\d{6}$/.test(v), message: 'Pincode must be 6 digits.'}},
   district: { type: String, required: [true, "District is required"], trim: true },
   state: { type: String, required: [true, "State is required"], trim: true },
   latitude: { type: String, trim: true, default: "" },
   longitude: { type: String, trim: true, default: "" },
   website: { type: String, trim: true, lowercase: true, default: "" },
   contactPerson: { type: String, trim: true, default: "" },
-  mobile: { /* ... validation ... */ type: String, required: true, trim: true, validate: { validator: (v) => /^[6-9]\d{9}$/.test(v), message: 'Mobile must be 10 digits starting with 6-9.'}},
+  mobile: { type: String, required: true, trim: true, validate: { validator: (v) => /^[6-9]\d{9}$/.test(v), message: 'Mobile must be 10 digits starting with 6-9.'}},
   alternateMobile: { type: String, trim: true, default: "" },
-  email: { /* ... validation ... */ type: String, trim: true, lowercase: true, default: "", validate: { validator: function(v) { return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}, message: 'Invalid email'}},
-  operatingHours: { // Schema expects a nested object
+  email: { type: String, trim: true, lowercase: true, default: "", validate: { validator: function(v) { return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}, message: 'Invalid email'}},
+  operatingHours: {
     open: { type: String, trim: true, default: "" },
     close: { type: String, trim: true, default: "" }
   },
@@ -34,17 +35,22 @@ const medicalDataSchema = new mongoose.Schema({
   specializedServices: { type: [String], default: [] },
   imageUrls: [{ _id: false, url: String, cloudinaryId: String }],
     
-  // =======================================================================
-  // THE FIX: Enabled the location field so it can be saved with submissions.
-  // =======================================================================
   location: {
     type: {
         type: String,
         enum: ['Point'],
     },
     coordinates: {
-        type: [Number], // [longitude, latitude]
+        type: [Number],
     }
+  },
+  // =======================================================================
+  // ADDED: The verificationStatus field to track the approval state.
+  // =======================================================================
+  verificationStatus: { 
+    type: String, 
+    enum: ['pending', 'verified', 'rejected'], 
+    default: 'pending' 
   },
 }, { timestamps: true, collection: 'medical_data_submissions' });
 

@@ -1,4 +1,3 @@
-// backend/rewards-service/src/models/service-schemas/ElectricianData.schema.js
 const mongoose = require('mongoose');
 
 const electricianDataSchema = new mongoose.Schema({
@@ -95,9 +94,8 @@ const electricianDataSchema = new mongoose.Schema({
     _id: false,
     url: String,
     cloudinaryId: String,
-    label: String, // To identify which type of image (Outside Image 1, Person Photo, etc.)
+    label: String,
   }],
-  // Optional: Add metadata for the 7 specific image types from your frontend
   imageMetadata: {
     outsideImage1: { url: String, cloudinaryId: String },
     insideImage1: { url: String, cloudinaryId: String },
@@ -105,7 +103,24 @@ const electricianDataSchema = new mongoose.Schema({
     aadharCardPhoto: { url: String, cloudinaryId: String },
     visitingCardInfo: { url: String, cloudinaryId: String }
   },
-    
+  location: {
+    type: {
+        type: String,
+        enum: ['Point'],
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+    }
+  },
+  // =======================================================================
+  // ADDED: The verificationStatus field to track the approval state.
+  // =======================================================================
+  verificationStatus: { 
+    type: String, 
+    enum: ['pending', 'verified', 'rejected'], 
+    default: 'pending' 
+  },
+      
   // =======================================================================
   // THE FIX: Enabled the location field so it can be saved with submissions.
   // =======================================================================
@@ -117,7 +132,7 @@ const electricianDataSchema = new mongoose.Schema({
     coordinates: {
         type: [Number], // [longitude, latitude]
     }
-  }
+  },
 }, {
   timestamps: true,
   collection: 'electrician_data_submissions'

@@ -20,7 +20,7 @@ const RENTAL_SERVICE_URL = process.env.RENTAL_SERVICE_URL || 'http://localhost:3
 const MESS_SERVICE_URL = process.env.MESS_SERVICE_URL || 'http://localhost:3004';
 // At the top, with other service URLs
 const MEDICAL_SERVICE_URL = process.env.MEDICAL_SERVICE_URL || 'http://localhost:3005';
-
+const PLUMBER_SERVICE_URL = process.env.PLUMBER_SERVICE_URL || 'http://localhost:3006'; // <-- DEFINE
 
 console.log(`[Gateway] AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}`);
 console.log(`[Gateway] REWARDS_SERVICE_URL: ${REWARDS_SERVICE_URL}`);
@@ -29,7 +29,7 @@ console.log(`[Gateway] REWARDS_SERVICE_URL: ${REWARDS_SERVICE_URL}`);
 console.log(`[Gateway] MESS_SERVICE_URL: ${MESS_SERVICE_URL}`);
 // With other console logs
 console.log(`[Gateway] MEDICAL_SERVICE_URL: ${MEDICAL_SERVICE_URL}`);
-
+console.log(`[Gateway] PLUMBER_SERVICE_URL: ${PLUMBER_SERVICE_URL}`);
 // CORS configuration
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
@@ -172,6 +172,9 @@ const messServiceProxy = createProxyMiddleware(createProxyOptions(MESS_SERVICE_U
 // --- ROUTING RULES ---
 // With other proxy instances
 const medicalServiceProxy = createProxyMiddleware(createProxyOptions(MEDICAL_SERVICE_URL, 'Medical Service'));
+const plumberServiceProxy = createProxyMiddleware(createProxyOptions(PLUMBER_SERVICE_URL, 'Plumber Service'));
+
+
 // Auth service routes
 app.use('/api/auth', (req, res, next) => {
   console.log(`[Gateway] 🔐 Routing ${req.method} ${req.originalUrl} to Auth Service`);
@@ -207,6 +210,12 @@ app.use('/api/mess', (req, res, next) => {
 app.use('/api/medical', (req, res, next) => {
   console.log(`[Gateway] ⚕️  Routing ${req.method} ${req.originalUrl} to Medical Service`);
   medicalServiceProxy(req, res, next);
+});
+
+// With other routing rules
+app.use('/api/plumber', (req, res, next) => {
+  console.log(`[Gateway] ⚕️  Routing ${req.method} ${req.originalUrl} to Plumber Service`);
+  plumberServiceProxy(req, res, next);
 });
 
 
