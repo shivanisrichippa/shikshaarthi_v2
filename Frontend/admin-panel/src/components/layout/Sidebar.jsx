@@ -47,7 +47,7 @@ const Sidebar = () => {
       <ul className="menu-inner py-1">
         {/* Dashboard */}
         <li className={`menu-item ${location.pathname === '/admin/dashboard' ? 'active' : ''}`}>
-          <Link to="/admin/dashboard" className="menu-link"><i className="menu-icon tf-icons bx bx-home-circle"></i><div>Dashboard</div></Link>
+          <Link to="/" className="menu-link"><i className="menu-icon tf-icons bx bx-home-circle"></i><div>Dashboard</div></Link>
         </li>
 
         {/* Management Section */}

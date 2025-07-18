@@ -1,3 +1,4 @@
+// Backend/medical-service/src/models/medical.model.js
 const mongoose = require('mongoose');
 
 // This schema reads from the collection where APPROVED medical data is stored.
@@ -18,6 +19,11 @@ const medicalSchema = new mongoose.Schema({
         type: { type: String, enum: ['Point'], required: true },
         coordinates: { type: [Number], required: true } // [longitude, latitude]
     },
+  //   verificationStatus: { 
+  //     type: String, 
+  //     enum: ['pending', 'verified', 'rejected'], 
+  //     default: 'pending' 
+  // },
 }, { 
   timestamps: true, 
   collection: 'medical_data_submissions' 
