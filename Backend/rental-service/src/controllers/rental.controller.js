@@ -8,6 +8,48 @@ const logger = require('../config/logger');
 const notificationService = require('../services/notification.service');
 const RentalInterest = require('../models/rental-interest.model');
 
+// exports.getNearbyRentals = async (req, res) => {
+//     try {
+//         const userId = req.headers['x-user-id'];
+//         if (!userId) {
+//             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not identified. Access denied." });
+//         }
+        
+//         const { data: userData } = await axios.get(
+//             `${config.AUTH_SERVICE_URL}/internal/users/${userId}/details`,
+//             { headers: { 'x-internal-api-key': config.INTERNAL_API_KEY } }
+//         );
+
+//         const user = userData.user;
+//         if (!user.location || !user.location.coordinates || (user.location.coordinates[0] === 0 && user.location.coordinates[1] === 0)) {
+//             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Your location is not set. Please update your profile." });
+//         }
+        
+//         const radiusInKm = parseInt(req.query.radius, 10) || 2;
+//         const distanceInMeters = Math.min(radiusInKm, 20) * 1000;
+        
+//         const nearbyRentals = await Rental.find({
+//             location: {
+//                 $near: {
+//                     $geometry: { type: "Point", coordinates: user.location.coordinates },
+//                     $maxDistance: distanceInMeters
+//                 }
+//             }
+//         });
+
+//         res.status(StatusCodes.OK).json({ 
+//             success: true, 
+//             count: nearbyRentals.length,
+//             data: nearbyRentals 
+//         });
+
+//     } catch (error) {
+//         const status = error.response?.status || StatusCodes.INTERNAL_SERVER_ERROR;
+//         const message = error.response?.data?.message || "Failed to fetch rental data.";
+//         logger.error("Error in getNearbyRentals", { error: error.message, stack: error.stack });
+//         res.status(status).json({ message });
+//     }
+// };
 exports.getNearbyRentals = async (req, res) => {
     try {
         const userId = req.headers['x-user-id'];
@@ -28,14 +70,18 @@ exports.getNearbyRentals = async (req, res) => {
         const radiusInKm = parseInt(req.query.radius, 10) || 2;
         const distanceInMeters = Math.min(radiusInKm, 20) * 1000;
         
+        // ====================== QUERY MODIFIED HERE ======================
+        // Find verified rentals near the user's location
         const nearbyRentals = await Rental.find({
             location: {
                 $near: {
                     $geometry: { type: "Point", coordinates: user.location.coordinates },
                     $maxDistance: distanceInMeters
                 }
-            }
+            },
+            verificationStatus: 'verified' // Only show verified rentals
         });
+        // ================================================================
 
         res.status(StatusCodes.OK).json({ 
             success: true, 
@@ -50,7 +96,6 @@ exports.getNearbyRentals = async (req, res) => {
         res.status(status).json({ message });
     }
 };
-
 exports.getRentalById = async (req, res) => {
     try {
         const { id } = req.params;
