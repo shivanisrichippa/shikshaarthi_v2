@@ -1,3 +1,5 @@
+
+// backend/rewards-service/src/models/service-schemas/ElectricianData.schema.js
 const mongoose = require('mongoose');
 
 const electricianDataSchema = new mongoose.Schema({
@@ -9,9 +11,7 @@ const electricianDataSchema = new mongoose.Schema({
     required: [true, "Mobile number is required"], 
     trim: true,
     validate: {
-      validator: function(v) {
-        return /^[6-9]\d{9}$/.test(v);
-      },
+      validator: (v) => /^[6-9]\d{9}$/.test(v),
       message: 'Mobile number must be 10 digits starting with 6-9'
     }
   },
@@ -20,22 +20,16 @@ const electricianDataSchema = new mongoose.Schema({
     trim: true, 
     lowercase: true,
     validate: {
-      validator: function(v) {
-        return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-      },
+      validator: (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
       message: 'Please enter a valid email address'
     }
   },
+  // FIXED: Changed from String to Number to match plumber schema
   experience: { 
-    type: String, 
+    type: Number, 
     required: [true, "Experience is required"],
-    validate: {
-      validator: function(v) {
-        const num = parseInt(v);
-        return !isNaN(num) && num >= 0 && num <= 50;
-      },
-      message: 'Experience must be a number between 0 and 50'
-    }
+    min: [0, 'Experience cannot be negative'],
+    max: [50, 'Experience cannot exceed 50 years']
   },
   address: { 
     type: String, 
@@ -48,9 +42,7 @@ const electricianDataSchema = new mongoose.Schema({
     required: [true, "Pincode is required"], 
     trim: true,
     validate: {
-      validator: function(v) {
-        return /^\d{6}$/.test(v);
-      },
+      validator: (v) => /^\d{6}$/.test(v),
       message: 'Pincode must be a 6-digit number'
     }
   },
@@ -61,9 +53,7 @@ const electricianDataSchema = new mongoose.Schema({
     required: [true, "Aadhar number is required"], 
     trim: true,
     validate: {
-      validator: function(v) {
-        return /^\d{12}$/.test(v);
-      },
+      validator: (v) => /^\d{12}$/.test(v),
       message: 'Aadhar number must be a 12-digit number'
     }
   },
@@ -72,15 +62,8 @@ const electricianDataSchema = new mongoose.Schema({
     trim: true,
     enum: {
       values: [
-        '', // Allow empty for optional field
-        'House Wiring',
-        'Commercial Wiring', 
-        'Industrial Wiring',
-        'Appliance Repair',
-        'Motor Repair',
-        'Panel Board Work',
-        'Solar Installation',
-        'General Electrical Work'
+        '', 'House Wiring', 'Commercial Wiring', 'Industrial Wiring', 'Appliance Repair',
+        'Motor Repair', 'Panel Board Work', 'Solar Installation', 'General Electrical Work'
       ],
       message: 'Invalid specialization selected'
     }
@@ -103,27 +86,12 @@ const electricianDataSchema = new mongoose.Schema({
     aadharCardPhoto: { url: String, cloudinaryId: String },
     visitingCardInfo: { url: String, cloudinaryId: String }
   },
-  location: {
-    type: {
-        type: String,
-        enum: ['Point'],
-    },
-    coordinates: {
-        type: [Number], // [longitude, latitude]
-    }
-  },
-  // =======================================================================
-  // ADDED: The verificationStatus field to track the approval state.
-  // =======================================================================
   verificationStatus: { 
     type: String, 
     enum: ['pending', 'verified', 'rejected'], 
     default: 'pending' 
   },
-      
-  // =======================================================================
-  // THE FIX: Enabled the location field so it can be saved with submissions.
-  // =======================================================================
+  // FIXED: Single location field definition
   location: {
     type: {
         type: String,
@@ -133,6 +101,10 @@ const electricianDataSchema = new mongoose.Schema({
         type: [Number], // [longitude, latitude]
     }
   },
+  // Added fields to match plumber schema
+  rating: { type: Number, min: 0, max: 5, default: 0 },
+  totalReviews: { type: Number, default: 0, min: 0 },
+  isActive: { type: Boolean, default: true }
 }, {
   timestamps: true,
   collection: 'electrician_data_submissions'
@@ -142,12 +114,13 @@ const electricianDataSchema = new mongoose.Schema({
 electricianDataSchema.index({ district: 1, state: 1, pincode: 1 });
 electricianDataSchema.index({ specialization: 1 });
 electricianDataSchema.index({ createdAt: -1 });
+electricianDataSchema.index({ location: '2dsphere' });
+electricianDataSchema.index({ mobile: 1 }, { unique: true, sparse: true });
+electricianDataSchema.index({ aadharNumber: 1 }, { unique: true, sparse: true });
 
-// Pre-save middleware to ensure at least 4 images are provided
 electricianDataSchema.pre('save', function(next) {
-  if (this.imageUrls && this.imageUrls.length < 4) {
-    const error = new Error('At least 4 images are required: Person Photo, Aadhar Card, and minimum 2 service images');
-    return next(error);
+  if (this.isNew && (!this.imageUrls || this.imageUrls.length < 4)) {
+    return next(new Error('At least 4 images are required: Person Photo, Aadhar Card, and minimum 2 service images'));
   }
   next();
 });

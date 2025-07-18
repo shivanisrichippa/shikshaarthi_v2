@@ -21,6 +21,8 @@ const MESS_SERVICE_URL = process.env.MESS_SERVICE_URL || 'http://localhost:3004'
 // At the top, with other service URLs
 const MEDICAL_SERVICE_URL = process.env.MEDICAL_SERVICE_URL || 'http://localhost:3005';
 const PLUMBER_SERVICE_URL = process.env.PLUMBER_SERVICE_URL || 'http://localhost:3006'; // <-- DEFINE
+const ELECTRICIAN_SERVICE_URL = process.env.ELECTRICIAN_SERVICE_URL || 'http://localhost:3007'; // <-- ADD
+
 
 console.log(`[Gateway] AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}`);
 console.log(`[Gateway] REWARDS_SERVICE_URL: ${REWARDS_SERVICE_URL}`);
@@ -30,6 +32,7 @@ console.log(`[Gateway] MESS_SERVICE_URL: ${MESS_SERVICE_URL}`);
 // With other console logs
 console.log(`[Gateway] MEDICAL_SERVICE_URL: ${MEDICAL_SERVICE_URL}`);
 console.log(`[Gateway] PLUMBER_SERVICE_URL: ${PLUMBER_SERVICE_URL}`);
+console.log(`[Gateway] ELECTRICIAN_SERVICE_URL: ${ELECTRICIAN_SERVICE_URL}`); // <-- ADD
 // CORS configuration
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
@@ -173,7 +176,7 @@ const messServiceProxy = createProxyMiddleware(createProxyOptions(MESS_SERVICE_U
 // With other proxy instances
 const medicalServiceProxy = createProxyMiddleware(createProxyOptions(MEDICAL_SERVICE_URL, 'Medical Service'));
 const plumberServiceProxy = createProxyMiddleware(createProxyOptions(PLUMBER_SERVICE_URL, 'Plumber Service'));
-
+const electricianServiceProxy = createProxyMiddleware(createProxyOptions(ELECTRICIAN_SERVICE_URL, 'Electrician Service')); // <-- ADD
 
 // Auth service routes
 app.use('/api/auth', (req, res, next) => {
@@ -218,6 +221,11 @@ app.use('/api/plumber', (req, res, next) => {
   plumberServiceProxy(req, res, next);
 });
 
+// Electrician service routes
+app.use('/api/electrician', (req, res, next) => {
+  console.log(`[Gateway] 💡 Routing ${req.method} ${req.originalUrl} to Electrician Service`);
+  electricianServiceProxy(req, res, next);
+});
 
 // 404 Handler for unmatched routes
 app.use((req, res) => {
@@ -229,6 +237,11 @@ app.use((req, res) => {
       '/api/auth/*',
       '/api/admin/*', 
       '/api/rewards/*',
+      '/api/rentals/*',
+      '/api/mess/*',
+      '/api/medical/*',
+      '/api/plumber/*',
+      '/api/electrician/*', // <-- ADD
       '/health'
     ],
     timestamp: new Date().toISOString()
