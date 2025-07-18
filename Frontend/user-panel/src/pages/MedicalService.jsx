@@ -1,77 +1,113 @@
 import React, { useEffect, useState } from 'react';
-import assets from '../assets/assets.js'; // Import images
-import './Services.css'; // Import Services.css for styling
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import axios from 'axios'; // <-- 1. ADDED: Direct import for axios
+import tokenService from '../utils/tokenService';
+import assets from '../assets/assets.js';
+import './ServicePage.css';
 
-const medicalData = [
-  { id: 1, name: 'City Hospital', type: 'Multi-Specialty Hospital', location: 'Downtown', imageUrl: assets.medical },
-  { id: 2, name: 'LifeCare Pharmacy', type: '24/7 Medical Store', location: 'Near College Gate', imageUrl: assets.medical2 },
-  { id: 3, name: 'Sunrise Clinic', type: 'General Physician & Diagnostics', location: 'Main Road', imageUrl: assets.medical3 },
-  { id: 4, name: 'MediPlus Pharmacy', type: 'Health & Wellness Store', location: 'Shopping Complex', imageUrl: assets.medical2 },
-];
+// 2. ADDED: API Gateway URL defined directly in the component
+const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
 
 const MedicalCard = ({ service }) => (
-  <div className="col-md-6 col-lg-3 mb-4">
-    <div className="card custom-card">
-      {/* Image Section */}
-      <div className="card-img-top">
-        <img src={service.imageUrl} alt={service.name} />
-        <div className="view-overlay">
-          <a href={`/medical/${service.id}`} className="view-icon">
-            <i className="fas fa-search-plus"></i>
-          </a>
-        </div>
+  <div className="room-card">
+      <div className="image-wrapper">
+          <img
+              className="room-image"
+              src={service.imageUrls && service.imageUrls.length > 0 ? service.imageUrls[0].url : assets.medical}
+              alt={service.name}
+          />
       </div>
-
-      {/* Card Body */}
-      <div className="card-body text-center">
-        <h5 className="card-title">{service.name}</h5>
-        <p className="card-text"><strong>Type:</strong> {service.type}</p>
-        <p className="card-text"><strong>Location:</strong> {service.location}</p>
-       
-        <a href={`/medical/${service.id}`} className="btn btn-primary py-2 px-5 rounded-pill know-more-btn">
-          Know More <i className="fas fa-arrow-right ps-2"></i>
-        </a>
+      <div className="card-body">
+          <h5 className="card-title">{service.name}</h5>
+          <div className="detail-item mb-3">
+              <span className="price-label">
+                  <i className="fas fa-pills" style={{ marginRight: '5px' }}></i> Type
+              </span>
+              <strong>{service.type}</strong>
+          </div>
+          <div className="details-container">
+              <div>
+                  <span className="price-label">From</span>
+                  <p className="price">{service.district}</p>
+              </div>
+              <Link to={`/medical/${service._id}`} className="view-offer-button">
+                  View Details <i className="fas fa-arrow-right button-icon"></i>
+              </Link>
+          </div>
       </div>
-    </div>
   </div>
 );
 
 const MedicalService = () => {
-  const [services, setServices] = useState([]);
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [searchRadius, setSearchRadius] = useState(5);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    setServices(medicalData);
-  }, []);
+    useEffect(() => {
+        const fetchServices = async () => {
+            if (!tokenService.isAuthenticated()) {
+                toast.error("Please log in to see nearby medical services.");
+                navigate('/login');
+                return;
+            }
+            setLoading(true);
+            setError('');
+            try {
+                // --- 3. CHANGED: Direct API call using axios ---
+                await tokenService.ensureValidToken();
+                const config = {
+                    headers: { Authorization: `Bearer ${tokenService.getToken()}` },
+                    params: { radius: searchRadius }
+                };
+                const response = await axios.get(`${API_URL}/api/medical/nearby`, config);
+                // --- End of Change ---
 
-  return (
-    <div>
-      {/* Header Section */}
-      <div className="container-fluid bg-light py-5">
-        <div className="container text-center">
-          <small className="section-heading">
-            Your Health, Our Priority 💙
-          </small>
-          <h1 className="display-5 fw-bold text-primary">Medical Services</h1>
-          <h6 className="lead text-muted">
-            Explore the best hospitals, clinics, and medical shops near you! 🏥💊
-          </h6>
+                setServices(response.data.data);
+                if (response.data.data.length === 0) {
+                    setError(`No medical facilities found within ${searchRadius}km.`);
+                }
+            } catch (err) {
+                const message = err.response?.data?.message || "Could not fetch medical services.";
+                setError(message);
+                toast.error(message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchServices();
+    }, [navigate, searchRadius]);
+    
+    const renderContent = () => {
+        if (loading) return <div className="loader-container"><div className="spinner"></div></div>;
+        if (error) return <div className="info-message">{error}</div>;
+        return (
+            <div className="grid-container">
+                {services.map(service => <MedicalCard key={service._id} service={service} />)}
+            </div>
+        );
+    };
+
+    return (
+        <div className="services-page">
+            <header className="services-header" style={{backgroundImage: `linear-gradient(rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.6)), url(${assets.medical3})`}}>
+                <h1 className="page-title">Health & Wellness Nearby</h1>
+                <p className="lead-text">Find trusted clinics, hospitals, and pharmacies near you.</p>
+                <div className="header-controls">
+                    {[2, 5, 10].map(radius => (
+                        <button key={radius} className={`radius-btn ${searchRadius === radius ? 'active' : ''}`} onClick={() => setSearchRadius(radius)} disabled={loading}>
+                            {radius} km
+                        </button>
+                    ))}
+                </div>
+            </header>
+            <main className="services-content-area">
+                {renderContent()}
+            </main>
         </div>
-      </div>
-
-      {/* Medical Services List */}
-      <div className="container-fluid py-4">
-        <div className="container">
-          <div className="row g-4">
-            {services.length > 0 ? (
-              services.map(service => <MedicalCard key={service.id} service={service} />)
-            ) : (
-              <p className="text-center text-danger">No medical services available at your location.</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default MedicalService;

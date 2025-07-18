@@ -21,11 +21,19 @@ const plumberDataSchema = new mongoose.Schema({
     url: String,
     cloudinaryId: String,
   }],
-  // location field removed since form doesn't collect lat/long, and it caused errors. Add back if needed.
-  // location: {
-  //   type: { type: String, enum: ['Point'] }, // NO default for type
-  //   coordinates: { type: [Number] }
-  // },
+    
+  // =======================================================================
+  // THE FIX: Enabled the location field so it can be saved with submissions.
+  // =======================================================================
+  location: {
+    type: {
+        type: String,
+        enum: ['Point'],
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+    }
+  },
   verificationStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
   rating: { type: Number, min: 0, max: 5, default: 0 },
   totalReviews: { type: Number, default: 0, min: 0 },
