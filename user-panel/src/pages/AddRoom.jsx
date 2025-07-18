@@ -11,7 +11,7 @@ const AddRoom = () => {
     price: "",
     address: "",
     district: "",
-    state: "",
+    state: "Maharashtra", // Pre-fill state if it's always the same
     pincode: "",
     type: "", // PG, Hostel, Apartment, etc.
     sharing: "", // Single, Double, etc.
@@ -165,9 +165,13 @@ const AddRoom = () => {
       // This explicit catch is for any specific component-level error handling or logging if needed.
       console.error("AddRoom: Submission error:", error);
       // Ensure loading toast is dismissed or updated if not handled by interceptor
-      if (toast.isActive(loadingToastId) && !loadingToastId.toString().startsWith('success')) {
-         toast.error(error.response?.data?.message || "Submission failed. Please review errors and try again.", { id: loadingToastId });
-      }
+      
+      // ==================== THE FIX ====================
+      // Replace the `if (toast.isActive...` block with this simpler line.
+      // Sonner will automatically find and replace the toast with the matching ID.
+      toast.error(error.response?.data?.message || "Submission failed. Please try again.", { id: loadingToastId });
+      // ===============================================
+
     } finally {
       setLoading(false);
       setSubmissionProgress(0);

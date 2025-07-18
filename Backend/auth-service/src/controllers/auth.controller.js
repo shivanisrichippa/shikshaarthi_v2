@@ -31,6 +31,7 @@ const { checkRateLimit } = require('../utils/rateLimit');
 // DATA & OTHER CONTROLLERS
 const collegesData = require('../scripts/data/maharashtra-colleges.json');
 const counterController = require('./counter.controller');
+const College = require('../models/College'); // <-- ADD THIS IMPORT
 
 // =============================================================================
 // HELPER FUNCTION to check DB connection
@@ -167,7 +168,80 @@ exports.sendVerificationOTP = async (req, res) => {
 // Verify OTP and complete registration
 
 
-// Verify OTP and complete registration
+// // Verify OTP and complete registration
+// exports.verifyOTPAndRegister = async (req, res) => {
+//     try {
+//         const { tempUserId, otp } = req.body;
+//         if (!tempUserId || !otp) {
+//             return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Temporary user ID and verification code are required' });
+//         }
+
+//         if (!isDbConnected()) {
+//             return res.status(StatusCodes.SERVICE_UNAVAILABLE).json({ error: 'Service temporarily unavailable' });
+//         }
+        
+//         const db = mongoose.connection.db; // Still needed for tempusers collection
+//         const tempUser = await db.collection('tempusers').findOne({ _id: new mongoose.Types.ObjectId(tempUserId) });
+//         if (!tempUser || tempUser.status !== 'pending_verification') {
+//             return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Verification session not found or expired' });
+//         }
+//         if (tempUser.otpAttempts >= 3) {
+//             await db.collection('tempusers').deleteOne({ _id: tempUser._id });
+//             return res.status(StatusCodes.TOO_MANY_REQUESTS).json({ error: 'Too many failed attempts' });
+//         }
+
+//         const isValidOTP = await OTPService.verifyOTP(tempUser.email, otp);
+//         if (!isValidOTP) {
+//             await db.collection('tempusers').updateOne({ _id: tempUser._id }, { $inc: { otpAttempts: 1 } });
+//             const attemptsLeft = 3 - (tempUser.otpAttempts + 1);
+//             return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid verification code', attemptsLeft });
+//         }
+
+//         // CORRECTED: Use the Mongoose User model to create the new user
+//         // This ensures schema defaults (like `coins: 50`) and hooks (like the post-save transaction log) are applied.
+//         const newUser = await User.create({
+//             fullName: tempUser.formData.fullName,
+//             email: tempUser.formData.email.toLowerCase(),
+//             password: tempUser.formData.password, // The pre-save hook will hash this
+//             contact: tempUser.formData.contact,
+//             collegeName: tempUser.formData.collegeName,
+//             district: tempUser.formData.district,
+//             tehsil: tempUser.formData.tehsil,
+//             pincode: tempUser.formData.pincode,
+//             emailVerified: true,
+//             subscriptionStatus: 'active',
+//             authProvider: 'email',
+//             // DO NOT set coins here. Let the schema default handle it.
+//         });
+
+//         const tokenPayload = { userId: newUser._id, email: newUser.email, role: newUser.role };
+//         const tokens = TokenService.generateTokenPair(tokenPayload);
+        
+//         await db.collection('tempusers').updateOne({ _id: tempUser._id }, { $set: { status: 'completed', completedAt: new Date() } });
+
+//         res.status(StatusCodes.CREATED).json({
+//             success: true,
+//             message: 'Registration completed successfully. 50 welcome coins awarded!',
+//             token: tokens.accessToken,
+//             refreshToken: tokens.refreshToken,
+//             user: { 
+//                 id: newUser._id, 
+//                 email: newUser.email, 
+//                 fullName: newUser.fullName, 
+//                 coins: newUser.coins // This will correctly be 50
+//             }
+//         });
+//     } catch (error) {
+//         logger.error('Verification and registration error:', error);
+//         if (error.code === 11000) { // Handle duplicate email error from Mongoose
+//              return res.status(StatusCodes.CONFLICT).json({ error: 'Email already registered.' });
+//         }
+//         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Registration failed' });
+//     }
+// };
+//=============================================================================
+// Replace your entire `verifyOTPAndRegister` function with this updated version
+// =============================================================================
 exports.verifyOTPAndRegister = async (req, res) => {
     try {
         const { tempUserId, otp } = req.body;
@@ -179,7 +253,7 @@ exports.verifyOTPAndRegister = async (req, res) => {
             return res.status(StatusCodes.SERVICE_UNAVAILABLE).json({ error: 'Service temporarily unavailable' });
         }
         
-        const db = mongoose.connection.db; // Still needed for tempusers collection
+        const db = mongoose.connection.db;
         const tempUser = await db.collection('tempusers').findOne({ _id: new mongoose.Types.ObjectId(tempUserId) });
         if (!tempUser || tempUser.status !== 'pending_verification') {
             return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Verification session not found or expired' });
@@ -196,8 +270,22 @@ exports.verifyOTPAndRegister = async (req, res) => {
             return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid verification code', attemptsLeft });
         }
 
-        // CORRECTED: Use the Mongoose User model to create the new user
-        // This ensures schema defaults (like `coins: 50`) and hooks (like the post-save transaction log) are applied.
+        // --- NEW LOGIC: Find the college to get its location ---
+        const collegeDetails = await College.findOne({
+            college: tempUser.formData.collegeName,
+            district: tempUser.formData.district
+        }).lean();
+
+        // Fallback location if college is not found
+        const userLocation = collegeDetails
+            ? collegeDetails.location
+            : { type: 'Point', coordinates: [0, 0] };
+
+        if (!collegeDetails) {
+          logger.warn(`Could not geocode college for new user: ${tempUser.formData.collegeName}. Defaulting location.`);
+        }
+        
+        // --- Create the new user with the location data ---
         const newUser = await User.create({
             fullName: tempUser.formData.fullName,
             email: tempUser.formData.email.toLowerCase(),
@@ -208,9 +296,8 @@ exports.verifyOTPAndRegister = async (req, res) => {
             tehsil: tempUser.formData.tehsil,
             pincode: tempUser.formData.pincode,
             emailVerified: true,
-            subscriptionStatus: 'active',
-            authProvider: 'email',
-            // DO NOT set coins here. Let the schema default handle it.
+            location: userLocation, 
+            // Other fields like `coins` and `subscription` will use schema defaults
         });
 
         const tokenPayload = { userId: newUser._id, email: newUser.email, role: newUser.role };
@@ -227,7 +314,7 @@ exports.verifyOTPAndRegister = async (req, res) => {
                 id: newUser._id, 
                 email: newUser.email, 
                 fullName: newUser.fullName, 
-                coins: newUser.coins // This will correctly be 50
+                coins: newUser.coins
             }
         });
     } catch (error) {

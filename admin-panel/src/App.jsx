@@ -27,11 +27,13 @@ const PlumberData = lazy(() => import('./pages/PlumberData.jsx'));
 const ElectricianData = lazy(() => import('./pages/ElectricianData.jsx'));
 const MedicalData= lazy(() => import('./pages/MedicalData.jsx'));
 const PendingApprovals = lazy(() => import('./pages/PendingApprovals.jsx'));
-const AddData = lazy(() => import('./pages/AddData.jsx'));
+
 const ApprovedSubmissions = lazy(() => import('./pages/ApprovedSubmissions.jsx'));
 
 const UnderMaintenancePage = lazy(() => import('./pages/UnderMaintenance.jsx'));
 const RejectedSubmissions = lazy(() => import('./pages/RejectedSubmissions.jsx'));
+const RentalInterest = lazy(() => import('./pages/RentalInterest.jsx'));
+const RentalInterestDetails = lazy(() => import('./pages/RentalInterestDetails.jsx'));
 // const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx')); // Create a simple 404 page
 
 // --- Simple Full Page Loader Component (can be in its own file) ---
@@ -121,7 +123,11 @@ function App() {
               <Route path="/admin/submissions/pending" element={<PendingApprovals />} />
               <Route path="/admin/submissions/approved" element={<ApprovedSubmissions />} />
               <Route path="/admin/submissions/rejected" element={<RejectedSubmissions />} />
-
+              
+              <Route path="/admin/services/rental-interest" element={<RentalInterest />} />
+              <Route path="/admin/services/rental-interest/:notificationId" element={<RentalInterestDetails />} />
+              
+              {/* Add Data Page */}
 
             </Route>
 

@@ -1,3 +1,5 @@
+// File: Backend/rewards-service/src/routes/index.js
+// ========================================================================
 const express = require('express');
 const submissionRoutes = require('./submission.routes');
 const adminRoutes = require('./admin.routes');
