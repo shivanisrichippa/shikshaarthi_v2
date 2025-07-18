@@ -22,6 +22,7 @@ const MESS_SERVICE_URL = process.env.MESS_SERVICE_URL || 'http://localhost:3004'
 const MEDICAL_SERVICE_URL = process.env.MEDICAL_SERVICE_URL || 'http://localhost:3005';
 const PLUMBER_SERVICE_URL = process.env.PLUMBER_SERVICE_URL || 'http://localhost:3006'; // <-- DEFINE
 const ELECTRICIAN_SERVICE_URL = process.env.ELECTRICIAN_SERVICE_URL || 'http://localhost:3007'; // <-- ADD
+const LAUNDRY_SERVICE_URL = process.env.LAUNDRY_SERVICE_URL || 'http://localhost:3008'; 
 
 
 console.log(`[Gateway] AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}`);
@@ -177,7 +178,7 @@ const messServiceProxy = createProxyMiddleware(createProxyOptions(MESS_SERVICE_U
 const medicalServiceProxy = createProxyMiddleware(createProxyOptions(MEDICAL_SERVICE_URL, 'Medical Service'));
 const plumberServiceProxy = createProxyMiddleware(createProxyOptions(PLUMBER_SERVICE_URL, 'Plumber Service'));
 const electricianServiceProxy = createProxyMiddleware(createProxyOptions(ELECTRICIAN_SERVICE_URL, 'Electrician Service')); // <-- ADD
-
+const laundryServiceProxy = createProxyMiddleware(createProxyOptions(LAUNDRY_SERVICE_URL, 'Laundry Service')); // <-- ADD
 // Auth service routes
 app.use('/api/auth', (req, res, next) => {
   console.log(`[Gateway] 🔐 Routing ${req.method} ${req.originalUrl} to Auth Service`);
@@ -226,7 +227,11 @@ app.use('/api/electrician', (req, res, next) => {
   console.log(`[Gateway] 💡 Routing ${req.method} ${req.originalUrl} to Electrician Service`);
   electricianServiceProxy(req, res, next);
 });
-
+// ADD THE NEW LAUNDRY ROUTE
+app.use('/api/laundry', (req, res, next) => {
+  console.log(`[Gateway] 🧺 Routing ${req.method} ${req.originalUrl} to Laundry Service`);
+  laundryServiceProxy(req, res, next);
+});
 // 404 Handler for unmatched routes
 app.use((req, res) => {
   console.log(`[Gateway] ❓ Route not found: ${req.method} ${req.originalUrl}`);
@@ -242,6 +247,7 @@ app.use((req, res) => {
       '/api/medical/*',
       '/api/plumber/*',
       '/api/electrician/*', // <-- ADD
+      '/api/laundry/*', // <-- ADD
       '/health'
     ],
     timestamp: new Date().toISOString()

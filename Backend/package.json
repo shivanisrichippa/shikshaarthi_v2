@@ -12,6 +12,7 @@
     "dev:medical": "npm --prefix medical-service run dev",
     "dev:plumber": "npm --prefix plumber-service run dev",
     "dev:electrician": "npm --prefix electrician-service run dev",
+    "dev:laundry": "npm --prefix laundry-service run dev",
     "dev": "concurrently \"npm:dev:*\""
   },
   "devDependencies": {
