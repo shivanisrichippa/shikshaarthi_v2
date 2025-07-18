@@ -104,6 +104,19 @@ const electricianDataSchema = new mongoose.Schema({
     personPhoto: { url: String, cloudinaryId: String },
     aadharCardPhoto: { url: String, cloudinaryId: String },
     visitingCardInfo: { url: String, cloudinaryId: String }
+  },
+    
+  // =======================================================================
+  // THE FIX: Enabled the location field so it can be saved with submissions.
+  // =======================================================================
+  location: {
+    type: {
+        type: String,
+        enum: ['Point'],
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+    }
   }
 }, {
   timestamps: true,

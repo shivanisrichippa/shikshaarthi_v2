@@ -33,6 +33,19 @@ const medicalDataSchema = new mongoose.Schema({
   paymentMethods: { type: [String], default: [] },
   specializedServices: { type: [String], default: [] },
   imageUrls: [{ _id: false, url: String, cloudinaryId: String }],
+    
+  // =======================================================================
+  // THE FIX: Enabled the location field so it can be saved with submissions.
+  // =======================================================================
+  location: {
+    type: {
+        type: String,
+        enum: ['Point'],
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+    }
+  },
 }, { timestamps: true, collection: 'medical_data_submissions' });
 
 medicalDataSchema.index({ district: 1, state: 1, pincode: 1 });
