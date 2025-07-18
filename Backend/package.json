@@ -7,6 +7,7 @@
     "dev:gateway": "npm --prefix api-gateway run dev",
     "dev:auth": "npm --prefix auth-service run dev",
     "dev:rewards": "npm --prefix rewards-service run dev",
+    "dev:rental": "npm --prefix rental-service run dev",
     "dev": "concurrently \"npm:dev:*\""
   },
   "devDependencies": {

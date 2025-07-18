@@ -9,11 +9,18 @@ const { StatusCodes } = require('http-status-codes');
 const logger = require('../config/logger');
 const internalAuthMiddleware = require('../middleware/internalAuth.middleware');
 const mongoose = require('mongoose');
+const internalController = require('../controllers/internal.controller');
+
 
 const router = express.Router();
 
 // Middleware to authenticate internal service calls
 router.use(internalAuthMiddleware);
+
+// === USER DETAIL ROUTES ===
+// The specific route the rental-service will call
+router.get('/users/:userId/details', internalController.getUserDetails);
+
 
 // 🌟 INCREMENT SUBMISSION STATS ROUTES (CORRECTED)
 router.post('/users/:userId/stats/increment-submitted', async (req, res) => {

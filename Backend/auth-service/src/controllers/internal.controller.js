@@ -5,6 +5,33 @@ const logger = require('../config/logger'); // Ensure path is correct
 
 
 
+// ==================== THE FIX ====================
+/**
+ * @desc   Get a user's full details. Called internally by other services.
+ * @route  GET /internal/users/:userId/details
+ * @access Internal
+ */
+exports.getUserDetails = async (req, res) => {
+    const { userId } = req.params;
+    try {
+        // Find the user and explicitly exclude the password
+        const user = await User.findById(userId).select('-password');
+        
+        if (!user) {
+            logger.warn(`[Internal] User details requested but user not found: ${userId}`);
+            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'User not found.' });
+        }
+        
+        logger.info(`[Internal] Successfully retrieved details for user ${userId}`);
+        res.status(StatusCodes.OK).json({ success: true, user });
+
+    } catch (error) {
+        logger.error(`[Internal] Failed to fetch details for user ${userId}:`, error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal server error.' });
+    }
+};
+// ===============================================
+
 /**
  * @desc   Update a user's submission statistics. Called internally by other services.
  * @route  PUT /internal/users/:userId/submission-stats

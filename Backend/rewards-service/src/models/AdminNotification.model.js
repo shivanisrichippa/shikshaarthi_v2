@@ -10,6 +10,7 @@ const adminNotificationSchema = new mongoose.Schema({
         'new_submission', 
         'reward_redemption_request',
         'spin_wheel_win', // <-- FIX: Added this new type for spin wheel prizes
+        'rental_interest', // <-- ADDED THIS NEW TYPE
         'user_message', 
         'system_alert'
     ],

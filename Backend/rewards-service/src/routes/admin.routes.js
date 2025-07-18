@@ -71,4 +71,9 @@ router.get('/users/:userId/transactions', (req, res) => {
     });
 });
 
+// --- RENTAL INTEREST ROUTES ---
+router.get('/notifications/rental-interest', adminController.getRentalInterestNotifications);
+router.get('/notifications/rental-interest/:notificationId', adminController.getRentalInterestDetails);
+
+
 module.exports = router;
