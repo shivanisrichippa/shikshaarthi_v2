@@ -1,78 +1,173 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from 'axios';
+import { toast } from 'sonner';
+import tokenService from '../utils/tokenService';
 import assets from "../assets/assets.js";
+import './ServicePage.css'; // Assuming a shared CSS file for styling
 
-const medicalData = [
-  {
-    id: 1,
-    name: "City Hospital",
-    address: "456 Main Road, Kolhapur, Maharashtra, 416008",
-    latitude: 16.704987,
-    longitude: 74.243253,
-    image: assets.medical, // Single Image
-    availability: "24/7",
-    helpline: "+91 98765 43210",
-    serviceType: "Emergency, OPD, Pharmacy, Diagnostic Labs",
-  },
-];
+const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
 
 const SingleMedical = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  
-  const medical = medicalData.find((m) => m.id === parseInt(id));
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [medicalService, setMedicalService] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [selectedImage, setSelectedImage] = useState('');
 
-  if (!medical) {
-    return <h2 className="text-center mt-5 text-dark">Medical service not found!</h2>;
-  }
+    useEffect(() => {
+        const fetchMedicalServiceDetails = async () => {
+            if (!tokenService.isAuthenticated()) {
+                toast.error("Please log in to view medical service details.");
+                navigate('/login');
+                return;
+            }
 
-  return (
-    <div className="container mt-5 py-5 text-dark">
-      <div className="row">
-        {/* Left - Image Section */}
-        <div className="col-md-6">
-          <div className="border p-3 rounded">
-            <img
-              src={medical.image}
-              className="img-fluid rounded shadow mb-3"
-              alt="Medical Preview"
-              style={{ maxHeight: "400px", objectFit: "cover", width: "100%" }}
-            />
-          </div>
+            try {
+                setLoading(true);
+                await tokenService.ensureValidToken();
+                const config = { headers: { Authorization: `Bearer ${tokenService.getToken()}` } };
+                const response = await axios.get(`${API_URL}/api/medical/${id}`, config);
+
+                if (response.data.success) {
+                    const service = response.data.data;
+                    setMedicalService(service);
+                    setSelectedImage(service.imageUrls?.[0]?.url || assets.medical);
+                } else {
+                    setError('Failed to load medical service details');
+                    toast.error('Failed to load medical service details');
+                }
+            } catch (err) {
+                const message = err.response?.data?.message || "Could not fetch medical service details.";
+                setError(message);
+                toast.error(message);
+                if (err.response?.status === 404) {
+                    setError('The medical service you are looking for does not exist.');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchMedicalServiceDetails();
+        }
+    }, [id, navigate]);
+
+    if (loading) {
+        return (
+            <div className="services-page">
+                <div className="loader-container"><div className="spinner"></div></div>
+            </div>
+        );
+    }
+
+    if (error || !medicalService) {
+        return (
+            <div className="services-page">
+                <main className="services-content-area">
+                    <div className="info-message">
+                        <h4>{error}</h4>
+                        <button className="view-offer-button" style={{marginTop: '2rem'}} onClick={() => navigate('/medical')}>
+                            Back to Medical Services
+                        </button>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    const images = medicalService.imageUrls?.length > 0
+        ? medicalService.imageUrls.map(img => img.url)
+        : [assets.medical, assets.medical2, assets.medical3];
+
+    return (
+        <div className="services-page">
+            <main className="services-content-area">
+                <div className="single-room-container">
+                    {/* Left Column: Image Gallery & Map */}
+                    <div className="image-gallery">
+                        <img src={selectedImage} className="main-image" alt="Selected service view" />
+                        <div className="thumbnail-gallery">
+                            {images.map((img, index) => (
+                                <img
+                                    key={index}
+                                    src={img}
+                                    className={`thumbnail-image ${selectedImage === img ? 'active' : ''}`}
+                                    alt={`Medical service thumbnail ${index + 1}`}
+                                    onClick={() => setSelectedImage(img)}
+                                />
+                            ))}
+                        </div>
+                        <div className="details-section" style={{marginTop: '2rem'}}>
+                            <h3 className="section-title">Location on Map</h3>
+                            {medicalService.location?.coordinates ? (
+                                <iframe
+                                    title="Service Location"
+                                    src={`https://www.google.com/maps?q=${medicalService.location.coordinates[1]},${medicalService.location.coordinates[0]}&output=embed`}
+                                    width="100%"
+                                    height="300"
+                                    className="rounded border shadow-sm"
+                                    style={{ border: "1px solid #ddd" }}
+                                    allowFullScreen=""
+                                    loading="lazy"
+                                ></iframe>
+                            ) : (
+                                <div className="info-message">Map data not available.</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right Column: Service Details */}
+                    <div className="room-details">
+                        <h1 className="room-title">{medicalService.name}</h1>
+                        <p className="room-location">
+                            <i className="fas fa-map-marker-alt"></i>
+                            {medicalService.address}, {medicalService.district}, {medicalService.pincode}
+                        </p>
+
+                        <div className="details-section">
+                            <h3 className="section-title">Key Information</h3>
+                            <div className="details-grid">
+                                <div className="detail-item">
+                                    <span><i className="fas fa-pills"></i> Type</span>
+                                    <strong>{medicalService.type}</strong>
+                                </div>
+                                {medicalService.specialization && (
+                                    <div className="detail-item">
+                                        <span><i className="fas fa-stethoscope"></i> Specialization</span>
+                                        <strong>{medicalService.specialization}</strong>
+                                    </div>
+                                )}
+                                <div className="detail-item">
+                                    <span><i className="fas fa-phone"></i> Mobile</span>
+                                    <strong>{medicalService.mobile}</strong>
+                                </div>
+                                {medicalService.operatingHours && (
+                                    <div className="detail-item">
+                                        <span><i className="fas fa-clock"></i> Hours</span>
+                                        <strong>{medicalService.operatingHours.open} - {medicalService.operatingHours.close}</strong>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {medicalService.services && (
+                            <div className="details-section">
+                                <h3 className="section-title">Services Offered</h3>
+                                <p className="section-content">{medicalService.services}</p>
+                            </div>
+                        )}
+
+                        <button onClick={() => navigate('/medical')} className="action-button">
+                            <i className="fas fa-arrow-left"></i> Back to Services
+                        </button>
+                    </div>
+                </div>
+            </main>
         </div>
-
-        {/* Right - Medical Details */}
-        <div className="col-md-6">
-          <h2 className="fw-bold text-dark mb-3">{medical.name}</h2>
-          <p><strong>Location:</strong> {medical.address}</p>
-
-         {/* Google Maps Embed */}
-{mess.latitude && mess.longitude ? (
-  <iframe
-    title="Mess Location"
-    src={`https://www.google.com/maps?q=${medical.latitude},${medical.longitude}&output=embed`}
-    width="100%"
-    height="250"
-    className="rounded border shadow-sm mb-3"
-    style={{ border: "1px solid #ddd" }}
-  ></iframe>
-) : (
-  <div className="rounded border shadow-sm mb-3 d-flex align-items-center justify-content-center" 
-       style={{ height: "250px", backgroundColor: "#f8f9fa" }}>
-    <p className="text-muted">Location not available</p>
-  </div>
-)}
-
-          <p><strong>Availability:</strong> {medical.availability}</p>
-          <p><strong>Helpline:</strong> {medical.helpline}</p>
-          <p><strong>Service Type:</strong> {medical.serviceType}</p>
-
-          {/* Book Appointment Button */}
-         
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default SingleMedical;

@@ -9,6 +9,7 @@
     "dev:rewards": "npm --prefix rewards-service run dev",
     "dev:rental": "npm --prefix rental-service run dev",
     "dev:mess": "npm --prefix mess-service run dev",
+    "dev:medical": "npm --prefix medical-service run dev",
     "dev": "concurrently \"npm:dev:*\""
   },
   "devDependencies": {

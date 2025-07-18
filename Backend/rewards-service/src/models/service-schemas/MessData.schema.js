@@ -57,9 +57,18 @@ timing: { type: String, required: [true, 'Mess timings are required'] },
   holderName: { type: String, required: [true, 'Holder name is required'] },
   mobile: { type: String, required: [true, 'Mobile number is required'] },
   imageUrls: [{ _id: false, url: String, cloudinaryId: String }],
+    
+  // =======================================================================
+  // THE FIX: Enabled the location field so it can be saved with submissions.
+  // =======================================================================
   location: {
-    type: { type: String, enum: ['Point'] },
-    coordinates: { type: [Number] }
+    type: {
+        type: String,
+        enum: ['Point'],
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+    }
   },
 }, { timestamps: true, collection: 'mess_data_submissions' });
 
