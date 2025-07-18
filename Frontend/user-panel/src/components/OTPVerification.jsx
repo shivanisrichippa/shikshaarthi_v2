@@ -9,6 +9,8 @@ const OTPVerification = ({ email, tempUserId, onSuccess, onBack, type = "registr
   const [otp, setOtp] = useState("");
   const [otpAttempts, setOtpAttempts] = useState(3);
   const [resendCooldown, setResendCooldown] = useState(120); // 2 minutes initial cooldown
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [loading, setLoading] = useState({
     verifying: false,
     resending: false
@@ -27,6 +29,11 @@ const OTPVerification = ({ email, tempUserId, onSuccess, onBack, type = "registr
 
     if (!otp || otp.length !== 6) {
       toast.error("Please enter a valid 6-digit verification code");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      toast.error("Please accept the terms and conditions to proceed");
       return;
     }
 
@@ -95,6 +102,39 @@ const OTPVerification = ({ email, tempUserId, onSuccess, onBack, type = "registr
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const TermsModal = () => (
+    <div className={`modal ${showTerms ? 'show d-block' : ''}`} tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Terms and Conditions</h5>
+            <button type="button" className="btn-close" onClick={() => setShowTerms(false)}></button>
+          </div>
+          <div className="modal-body">
+            <div className="terms-content">
+              <h6 className="fw-bold mb-3">Service Usage Agreement</h6>
+              
+              <p className="small text-muted mb-2">
+                1. We access your email for OTP verification purposes only.
+              </p>
+              <p className="small text-muted mb-2">
+                2. Gallery access is permitted for Supercoin feature image uploads only.
+              </p>
+              <p className="small text-muted mb-3">
+                3. User-provided data is processed voluntarily; we are not responsible for complications arising from its utilization.
+              </p>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowTerms(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <ErrorBoundary>
       <div className="container min-vh-100 d-flex align-items-center justify-content-center py-4">
@@ -147,10 +187,32 @@ const OTPVerification = ({ email, tempUserId, onSuccess, onBack, type = "registr
               </small>
             </div>
 
+            {/* Terms and Conditions Checkbox */}
+            <div className="form-check mb-3">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="acceptTerms"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+              />
+              <label className="form-check-label small" htmlFor="acceptTerms">
+                I agree to the{" "}
+                <button
+                  type="button"
+                  className="btn btn-link p-0 text-primary"
+                  style={{ fontSize: "inherit", textDecoration: "underline" }}
+                  onClick={() => setShowTerms(true)}
+                >
+                  Terms and Conditions
+                </button>
+              </label>
+            </div>
+
             <button
               type="submit"
               className="btn btn-primary w-100 mb-3 py-3"
-              disabled={loading.verifying || !otp || otp.length !== 6}
+              disabled={loading.verifying || !otp || otp.length !== 6 || !acceptedTerms}
               style={{ fontSize: "1.1rem", fontWeight: "600" }}
             >
               {loading.verifying ? (
@@ -203,6 +265,9 @@ const OTPVerification = ({ email, tempUserId, onSuccess, onBack, type = "registr
           </div>
         </div>
       </div>
+
+      {/* Terms Modal */}
+      <TermsModal />
     </ErrorBoundary>
   );
 };

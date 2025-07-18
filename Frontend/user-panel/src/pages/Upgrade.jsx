@@ -13,6 +13,7 @@ const Upgrade = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [user, setUser] = useState(null);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -65,6 +66,11 @@ const Upgrade = () => {
 
     const handlePayment = async () => {
         if (!subscriptionDetails) return;
+
+        if (!acceptedTerms) {
+            toast.error("Please accept the Terms and Conditions to proceed.");
+            return;
+        }
 
         const loadingToast = toast.loading("Initializing secure payment...");
 
@@ -273,6 +279,11 @@ const Upgrade = () => {
         );
     }
 
+    // Calculate transaction charges (2% of base price)
+    const transactionCharges = subscriptionDetails.basePrice * 0.02;
+    const subtotal = subscriptionDetails.basePrice + transactionCharges;
+    const finalAmountAfterDiscount = subtotal - subscriptionDetails.discount.amount;
+
     return (
         <>
             <Toaster richColors position="top-right" />
@@ -380,6 +391,14 @@ const Upgrade = () => {
                                                         ₹{subscriptionDetails.basePrice.toFixed(2)}
                                                     </span>
                                                 </div>
+                                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                                    <span className="text-muted" style={{ fontSize: 'clamp(0.8rem, 2vw, 0.9rem)' }}>
+                                                        Transaction Charges (2%):
+                                                    </span>
+                                                    <span className="fw-bold" style={{ color: '#333', fontSize: 'clamp(0.9rem, 2.5vw, 1rem)' }}>
+                                                        ₹{transactionCharges.toFixed(2)}
+                                                    </span>
+                                                </div>
                                                 {subscriptionDetails.discount.percentage > 0 && (
                                                     <div className="d-flex justify-content-between align-items-center mb-2">
                                                         <span className="text-muted" style={{ fontSize: 'clamp(0.8rem, 2vw, 0.9rem)' }}>
@@ -394,7 +413,7 @@ const Upgrade = () => {
                                                 <div className="d-flex justify-content-between align-items-center">
                                                     <span className="fw-bold" style={{ color: '#333', fontSize: 'clamp(1rem, 3vw, 1.25rem)' }}>Total:</span>
                                                     <span className="fw-bold" style={{ color: '#d4a762', fontSize: 'clamp(1.1rem, 3.5vw, 1.5rem)' }}>
-                                                        ₹{subscriptionDetails.finalPrice.toFixed(2)}
+                                                        ₹{finalAmountAfterDiscount.toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -423,26 +442,71 @@ const Upgrade = () => {
                                                 </li>
                                             </ul>
 
+                                            {/* Terms and Conditions Checkbox */}
+                                            <div className="mb-4 text-start">
+                                                <div className="form-check">
+                                                    <input 
+                                                        className="form-check-input" 
+                                                        type="checkbox" 
+                                                        id="termsCheck"
+                                                        checked={acceptedTerms}
+                                                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                                        style={{ 
+                                                            borderColor: '#d4a762',
+                                                            backgroundColor: acceptedTerms ? '#d4a762' : 'white'
+                                                        }}
+                                                    />
+                                                    <label className="form-check-label" htmlFor="termsCheck" style={{ fontSize: 'clamp(0.75rem, 2vw, 0.875rem)' }}>
+                                                        I agree to the{' '}
+                                                        <strong style={{ color: '#d4a762' }}>Terms and Conditions</strong>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            {/* Terms and Conditions Box */}
+                                            <div className="mb-4 p-3 text-start" style={{ 
+                                                backgroundColor: '#fff3e0', 
+                                                borderRadius: '8px', 
+                                                border: '1px solid #d4a762' 
+                                            }}>
+                                                <h6 className="fw-bold mb-2" style={{ color: '#d4a762', fontSize: 'clamp(0.8rem, 2vw, 0.9rem)' }}>
+                                                    <i className="fas fa-exclamation-circle me-2"></i>Important Terms
+                                                </h6>
+                                                <ul className="mb-0 ps-3" style={{ fontSize: 'clamp(0.75rem, 2vw, 0.825rem)', color: '#666' }}>
+                                                    <li className="mb-1">
+                                                        <strong>No Refunds:</strong> All subscription payments are non-refundable after successful payment processing.
+                                                    </li>
+                                                    <li className="mb-0">
+                                                        <strong>No Cancellation:</strong> Subscription cancellation is not allowed once the payment is completed.
+                                                    </li>
+                                                </ul>
+                                            </div>
+
                                             {/* Payment Button */}
                                             <button 
                                                 className="btn w-100 py-3 fw-bold mb-3" 
                                                 onClick={handlePayment} 
                                                 style={{ 
-                                                    backgroundColor: '#333', 
-                                                    color: '#d4a762', 
-                                                    border: '2px solid #d4a762', 
+                                                    backgroundColor: acceptedTerms ? '#333' : '#ccc', 
+                                                    color: acceptedTerms ? '#d4a762' : '#999', 
+                                                    border: acceptedTerms ? '2px solid #d4a762' : '2px solid #ccc', 
                                                     borderRadius: '12px',
                                                     transition: 'all 0.3s ease',
-                                                    fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)'
+                                                    fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                                                    cursor: acceptedTerms ? 'pointer' : 'not-allowed'
                                                 }}
-                                                disabled={!subscriptionDetails}
+                                                disabled={!subscriptionDetails || !acceptedTerms}
                                                 onMouseOver={(e) => {
-                                                    e.target.style.backgroundColor = '#d4a762';
-                                                    e.target.style.color = 'white';
+                                                    if (acceptedTerms) {
+                                                        e.target.style.backgroundColor = '#d4a762';
+                                                        e.target.style.color = 'white';
+                                                    }
                                                 }}
                                                 onMouseOut={(e) => {
-                                                    e.target.style.backgroundColor = '#333';
-                                                    e.target.style.color = '#d4a762';
+                                                    if (acceptedTerms) {
+                                                        e.target.style.backgroundColor = '#333';
+                                                        e.target.style.color = '#d4a762';
+                                                    }
                                                 }}
                                             >
                                                 <i className="fas fa-credit-card me-2"></i> 
