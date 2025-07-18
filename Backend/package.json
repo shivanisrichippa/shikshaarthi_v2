@@ -10,6 +10,7 @@
     "dev:rental": "npm --prefix rental-service run dev",
     "dev:mess": "npm --prefix mess-service run dev",
     "dev:medical": "npm --prefix medical-service run dev",
+    "dev:plumber": "npm --prefix plumber-service run dev",
     "dev": "concurrently \"npm:dev:*\""
   },
   "devDependencies": {

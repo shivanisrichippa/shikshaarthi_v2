@@ -1,4 +1,3 @@
-// backend/rewards-service/src/models/service-schemas/LaundryData.schema.js
 const mongoose = require('mongoose');
 
 const laundryDataSchema = new mongoose.Schema({
@@ -65,7 +64,6 @@ const laundryDataSchema = new mongoose.Schema({
     max: [30, 'Return days cannot exceed 30']
   },
   
-  // Service Type - NEW FIELD from frontend
   serviceType: { 
     type: String, 
     enum: ['Shop', 'Individual'],
@@ -73,7 +71,6 @@ const laundryDataSchema = new mongoose.Schema({
     default: "Shop" 
   },
   
-  // Calculated field
   totalAmount: { 
     type: Number,
     default: function() {
@@ -83,31 +80,31 @@ const laundryDataSchema = new mongoose.Schema({
     }
   },
   
-  // Images
   imageUrls: [{
     _id: false,
     url: { type: String, required: true },
     cloudinaryId: { type: String, required: true },
-    label: { type: String } // To store which type of image it is (Outside Image, Inside Image, etc.)
+    label: { type: String }
   }],
     
-  // =======================================================================
-  // THE FIX: Enabled the location field so it can be saved with submissions.
-  // =======================================================================
   location: {
     type: {
         type: String,
         enum: ['Point'],
     },
     coordinates: {
-        type: [Number], // [longitude, latitude]
+        type: [Number],
     }
   },
-  // Optional: Location data for future use
-  // location: {
-  //   type: { type: String, enum: ['Point'], default: 'Point' },
-  //   coordinates: { type: [Number], index: '2dsphere' }
-  // },
+
+  // =======================================================================
+  // ADDED: The verificationStatus field to track the approval state.
+  // =======================================================================
+  verificationStatus: { 
+    type: String, 
+    enum: ['pending', 'verified', 'rejected'], 
+    default: 'pending' 
+  },
   
 }, {
   timestamps: true,
@@ -130,29 +127,15 @@ laundryDataSchema.pre('save', function(next) {
   next();
 });
 
-// Virtual for formatted cost display
 laundryDataSchema.virtual('formattedCost').get(function() {
   return `₹${this.totalAmount?.toFixed(2) || '0.00'} per kg`;
 });
 
-// Method to get image labels based on service type
 laundryDataSchema.methods.getImageLabels = function() {
   if (this.serviceType === 'Shop') {
-    return [
-      'Outside Image', 
-      'Inside Image', 
-      'Visiting Card/Info Board',
-      'Additional Photo 1',
-      'Additional Photo 2'
-    ];
+    return [ 'Outside Image', 'Inside Image', 'Visiting Card/Info Board', 'Additional Photo 1', 'Additional Photo 2' ];
   } else {
-    return [
-      'Photo of the Person', 
-      'Address Proof Photo', 
-      'Aadhar Card Photo',
-      'Visiting Card/Info (if any)',
-      'Additional Photo'
-    ];
+    return [ 'Photo of the Person', 'Address Proof Photo', 'Aadhar Card Photo', 'Visiting Card/Info (if any)', 'Additional Photo' ];
   }
 };
 

@@ -24,6 +24,11 @@ const rentalSchema = new mongoose.Schema({
         type: { type: String, enum: ['Point'], required: true },
         coordinates: { type: [Number], required: true }
     },
+  //   verificationStatus: { 
+  //     type: String, 
+  //     enum: ['pending', 'verified', 'rejected'], 
+  //     default: 'pending' 
+  // },
     // We remove the 'status' field because it's not in rental_data_submissions
     // status: { ... }  <-- THIS FIELD IS REMOVED
 }, { 

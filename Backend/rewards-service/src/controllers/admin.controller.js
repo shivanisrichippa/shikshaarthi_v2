@@ -386,6 +386,133 @@ const updateSubmissionData = async (req, res) => {
 // It replaces your old approveSubmission function.
 // ======================================================================================
 
+// const approveSubmission = async (req, res) => {
+//     const { submissionId } = req.params;
+//     const { adminNotes } = req.body;
+//     const adminUserId = req.user.userId;
+//     const reqIdForLog = `admin-${adminUserId.slice(-4)}-approve-${submissionId.slice(-5)}`;
+
+//     logger.info(`[${reqIdForLog}] Starting approval process for submission ${submissionId}`);
+
+//     // Get the database connection for the 'rewards' service where the transaction will live
+//     const rewardsDb = getDbConnection('rewards');
+//     if (!rewardsDb) {
+//         logger.error(`[${reqIdForLog}] CRITICAL: Could not get rewards DB connection.`);
+//         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Database service is not ready.' });
+//     }
+
+//     const session = await rewardsDb.startSession();
+//     let centralSubmission; // To hold submission data across scopes
+
+//     try {
+//         // === Step 1: Fetch all necessary data *before* starting the transaction ===
+//         const CentralSubmission = CentralSubmissionModule.getModel();
+
+//         // Fetch the main submission document to get its type and check its status
+//         const submissionToApprove = await CentralSubmission.findById(submissionId).lean();
+
+//         if (!submissionToApprove) {
+//             throw new Error('Submission not found.');
+//         }
+//         if (submissionToApprove.status !== 'pending') {
+//             throw new Error(`Submission has already been processed. Current status: ${submissionToApprove.status}`);
+//         }
+
+//         // Fetch the detailed data from the service-specific DB (e.g., 'mess' or 'rental')
+//         // NO session is used here because it's a different database connection.
+//         const SourceServiceModel = getServiceModel(submissionToApprove.serviceType);
+//         const sourceData = await SourceServiceModel.findById(submissionToApprove.serviceDataId).lean();
+
+//         if (!sourceData) {
+//             throw new Error(`Inconsistency: Source data for submission ${submissionId} not found in the ${submissionToApprove.serviceType} collection.`);
+//         }
+        
+//         // === Step 2: Start the transaction on the Rewards DB ===
+//         session.startTransaction();
+//         logger.info(`[${reqIdForLog}] Database transaction started on 'rewards' database.`);
+
+//         // Re-fetch inside the transaction to apply a lock
+//         centralSubmission = await CentralSubmission.findById(submissionId).session(session);
+
+//         // Update the central submission document
+//         centralSubmission.status = 'verified';
+//         centralSubmission.verifiedBy = adminUserId;
+//         centralSubmission.verifiedAt = new Date();
+//         centralSubmission.adminNotes = adminNotes;
+//         await centralSubmission.save({ session });
+//         logger.info(`[${reqIdForLog}] CentralSubmission status updated to 'verified' within the transaction.`);
+
+//         // === Step 3: Commit the Rewards DB Transaction FIRST ===
+//         await session.commitTransaction();
+//         logger.info(`[${reqIdForLog}] Transaction committed successfully on 'rewards' database.`);
+
+
+//         // === Step 4: Perform operations on OTHER databases (Post-Transaction) ===
+//         // This is "eventual consistency." We publish the live data *after* confirming the approval.
+//         try {
+//             // This function needs to exist and return the model for your LIVE data collection
+//             const LiveServiceModel = getLiveServiceModel(centralSubmission.serviceType);
+//             if (!LiveServiceModel) {
+//                 throw new Error(`CRITICAL: Live service model for '${centralSubmission.serviceType}' could not be loaded.`);
+//             }
+
+//             const liveDataPayload = { ...sourceData, status: 'available' };
+//             delete liveDataPayload._id;
+//             delete liveDataPayload.centralSubmissionId;
+//             delete liveDataPayload.__v;
+//             delete liveDataPayload.createdAt;
+//             delete liveDataPayload.updatedAt;
+
+//             const liveDocument = new LiveServiceModel(liveDataPayload);
+//             await liveDocument.save(); // This is a single operation on a different DB.
+//             logger.info(`[${reqIdForLog}] Saved live document to ${centralSubmission.serviceType}-service DB. New ID: ${liveDocument._id}`);
+//         } catch (liveDbError) {
+//             // IMPORTANT: If this fails, the submission is approved but the data is not public.
+//             // This requires manual intervention, so we log it as a critical failure.
+//             logger.error(`[${reqIdForLog}] CRITICAL FAILURE: Transaction was committed, but failed to publish live data for submission ${submissionId}. MANUAL INTERVENTION REQUIRED.`, { error: liveDbError });
+//             // Let the process continue, as the core task (approval) is done.
+//         }
+
+//         // === Step 5: Perform non-critical side effects (API calls, notifications) ===
+//         const coinsToAward = coinCalculatorService.calculateCoinsForSubmission(centralSubmission.serviceType);
+//         const apiPromises = [];
+//         if (coinsToAward > 0) {
+//             apiPromises.push(authApiService.awardCoins(centralSubmission.userId, coinsToAward, `Reward for ${centralSubmission.serviceType}`));
+//         }
+//         apiPromises.push(authApiService.grantSpin(centralSubmission.userId));
+//         apiPromises.push(authApiService.incrementSubmissionStats(centralSubmission.userId, 'verified'));
+
+//         // We don't wait for these. If they fail, it doesn't change the approval status.
+//         Promise.all(apiPromises).catch(err => {
+//             logger.error(`[${reqIdForLog}] Post-approval API calls failed for submission ${submissionId}. This does not affect approval status but needs checking.`, { error: err });
+//         });
+        
+//         const userMessage = `Your submission "${centralSubmission.titlePreview || ''}" has been approved! You earned ${coinsToAward} Supercoins and 1 Spin Wheel chance!`;
+//         notificationService.createUserStatusUpdateNotification(centralSubmission, userMessage);
+
+//         // === Step 6: Final Success Response ===
+//         return res.status(StatusCodes.OK).json({
+//             success: true,
+//             message: 'Submission approved and published successfully.',
+//             data: centralSubmission
+//         });
+
+//     } catch (error) {
+//         logger.error(`[${reqIdForLog}] CRITICAL ERROR during approval process:`, { message: error.message, stack: error.stack });
+//         if (session.inTransaction()) {
+//             await session.abortTransaction();
+//             logger.warn(`[${reqIdForLog}] Transaction aborted due to error.`);
+//         }
+//         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message || 'Failed to approve submission.' });
+//     } finally {
+//         await session.endSession();
+//         logger.info(`[${reqIdForLog}] Session ended.`);
+//     }
+// };
+
+
+// In: backend/rewards-service/src/controllers/admin.controller.js
+
 const approveSubmission = async (req, res) => {
     const { submissionId } = req.params;
     const { adminNotes } = req.body;
@@ -394,21 +521,17 @@ const approveSubmission = async (req, res) => {
 
     logger.info(`[${reqIdForLog}] Starting approval process for submission ${submissionId}`);
 
-    // Get the database connection for the 'rewards' service where the transaction will live
     const rewardsDb = getDbConnection('rewards');
     if (!rewardsDb) {
-        logger.error(`[${reqIdForLog}] CRITICAL: Could not get rewards DB connection.`);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Database service is not ready.' });
     }
 
     const session = await rewardsDb.startSession();
-    let centralSubmission; // To hold submission data across scopes
+    let centralSubmission; 
 
     try {
         // === Step 1: Fetch all necessary data *before* starting the transaction ===
         const CentralSubmission = CentralSubmissionModule.getModel();
-
-        // Fetch the main submission document to get its type and check its status
         const submissionToApprove = await CentralSubmission.findById(submissionId).lean();
 
         if (!submissionToApprove) {
@@ -417,24 +540,13 @@ const approveSubmission = async (req, res) => {
         if (submissionToApprove.status !== 'pending') {
             throw new Error(`Submission has already been processed. Current status: ${submissionToApprove.status}`);
         }
-
-        // Fetch the detailed data from the service-specific DB (e.g., 'mess' or 'rental')
-        // NO session is used here because it's a different database connection.
-        const SourceServiceModel = getServiceModel(submissionToApprove.serviceType);
-        const sourceData = await SourceServiceModel.findById(submissionToApprove.serviceDataId).lean();
-
-        if (!sourceData) {
-            throw new Error(`Inconsistency: Source data for submission ${submissionId} not found in the ${submissionToApprove.serviceType} collection.`);
-        }
         
         // === Step 2: Start the transaction on the Rewards DB ===
         session.startTransaction();
         logger.info(`[${reqIdForLog}] Database transaction started on 'rewards' database.`);
 
-        // Re-fetch inside the transaction to apply a lock
         centralSubmission = await CentralSubmission.findById(submissionId).session(session);
 
-        // Update the central submission document
         centralSubmission.status = 'verified';
         centralSubmission.verifiedBy = adminUserId;
         centralSubmission.verifiedAt = new Date();
@@ -448,29 +560,35 @@ const approveSubmission = async (req, res) => {
 
 
         // === Step 4: Perform operations on OTHER databases (Post-Transaction) ===
-        // This is "eventual consistency." We publish the live data *after* confirming the approval.
+        // This is where we will add the logic to update the service-specific data.
         try {
-            // This function needs to exist and return the model for your LIVE data collection
-            const LiveServiceModel = getLiveServiceModel(centralSubmission.serviceType);
-            if (!LiveServiceModel) {
-                throw new Error(`CRITICAL: Live service model for '${centralSubmission.serviceType}' could not be loaded.`);
+            // Get the model for the specific service (e.g., PlumberData)
+            const ServiceModel = getServiceModel(centralSubmission.serviceType);
+            if (!ServiceModel) {
+                // This is a critical error if the model can't be found
+                throw new Error(`CRITICAL: Service model for '${centralSubmission.serviceType}' could not be loaded.`);
             }
 
-            const liveDataPayload = { ...sourceData, status: 'available' };
-            delete liveDataPayload._id;
-            delete liveDataPayload.centralSubmissionId;
-            delete liveDataPayload.__v;
-            delete liveDataPayload.createdAt;
-            delete liveDataPayload.updatedAt;
+            // =======================================================================
+            // THE FIX: Update the verificationStatus in the service-specific collection.
+            // =======================================================================
+            const updatedServiceDoc = await ServiceModel.findByIdAndUpdate(
+                centralSubmission.serviceDataId,
+                { $set: { verificationStatus: 'verified' } },
+                { new: true } // Return the updated document
+            );
 
-            const liveDocument = new LiveServiceModel(liveDataPayload);
-            await liveDocument.save(); // This is a single operation on a different DB.
-            logger.info(`[${reqIdForLog}] Saved live document to ${centralSubmission.serviceType}-service DB. New ID: ${liveDocument._id}`);
-        } catch (liveDbError) {
-            // IMPORTANT: If this fails, the submission is approved but the data is not public.
-            // This requires manual intervention, so we log it as a critical failure.
-            logger.error(`[${reqIdForLog}] CRITICAL FAILURE: Transaction was committed, but failed to publish live data for submission ${submissionId}. MANUAL INTERVENTION REQUIRED.`, { error: liveDbError });
-            // Let the process continue, as the core task (approval) is done.
+            if (!updatedServiceDoc) {
+                logger.error(`[${reqIdForLog}] FAILED to find and update service data doc with ID: ${centralSubmission.serviceDataId} in collection for ${centralSubmission.serviceType}`);
+            } else {
+                logger.info(`[${reqIdForLog}] Successfully updated verificationStatus to 'verified' for doc ${updatedServiceDoc._id} in ${centralSubmission.serviceType} collection.`);
+            }
+            // ========================== END OF FIX ============================
+
+        } catch (serviceDbError) {
+            // If this fails, the submission is approved but the status isn't updated.
+            // This requires logging for manual intervention.
+            logger.error(`[${reqIdForLog}] CRITICAL FAILURE: Transaction was committed, but failed to update the service-specific data for submission ${submissionId}. MANUAL INTERVENTION REQUIRED.`, { error: serviceDbError });
         }
 
         // === Step 5: Perform non-critical side effects (API calls, notifications) ===
@@ -482,7 +600,6 @@ const approveSubmission = async (req, res) => {
         apiPromises.push(authApiService.grantSpin(centralSubmission.userId));
         apiPromises.push(authApiService.incrementSubmissionStats(centralSubmission.userId, 'verified'));
 
-        // We don't wait for these. If they fail, it doesn't change the approval status.
         Promise.all(apiPromises).catch(err => {
             logger.error(`[${reqIdForLog}] Post-approval API calls failed for submission ${submissionId}. This does not affect approval status but needs checking.`, { error: err });
         });
@@ -493,7 +610,7 @@ const approveSubmission = async (req, res) => {
         // === Step 6: Final Success Response ===
         return res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Submission approved and published successfully.',
+            message: 'Submission approved and data status updated successfully.',
             data: centralSubmission
         });
 
@@ -509,6 +626,7 @@ const approveSubmission = async (req, res) => {
         logger.info(`[${reqIdForLog}] Session ended.`);
     }
 };
+
 const rejectSubmission = async (req, res) => {
     const { submissionId } = req.params;
     const { adminNotes } = req.body;

@@ -5,7 +5,6 @@ const MessInterest = require('../models/mess-interest.model');
 const config = require('../config');
 const logger = require('../config/logger');
 const notificationService = require('../services/notification.service');
-
 exports.getNearbyMesses = async (req, res) => {
     try {
         const userId = req.headers['x-user-id'];
@@ -26,14 +25,18 @@ exports.getNearbyMesses = async (req, res) => {
         const radiusInKm = parseInt(req.query.radius, 10) || 5; // Default 5km for messes
         const distanceInMeters = Math.min(radiusInKm, 20) * 1000;
         
+        // ====================== QUERY MODIFIED HERE ======================
+        // Find verified messes near the user's location
         const nearbyMesses = await Mess.find({
             location: {
                 $near: {
                     $geometry: { type: "Point", coordinates: user.location.coordinates },
                     $maxDistance: distanceInMeters
                 }
-            }
+            },
+            verificationStatus: 'verified' // Only show verified messes
         });
+        // ================================================================
 
         res.status(StatusCodes.OK).json({ 
             success: true, 

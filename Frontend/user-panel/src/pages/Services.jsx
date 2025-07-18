@@ -22,20 +22,7 @@ const services = [
     link: "/mess",
     isPremium: true
   },
-  {
-    icon: "fas fa-shopping-cart",
-    title: "Buy Pre-Owned Stationery",
-    description: "Purchase second-hand books, notes, and accessories.",
-    link: "/products",
-    isPremium: true
-  },
-  {
-    icon: "fas fa-handshake",
-    title: "Sell Pre-Owned Stationery",
-    description: "Sell used stationery and educational materials easily.",
-    link: "/sell-products",
-    isPremium: true
-  },
+ 
   {
     icon: "fas fa-hospital",
     title: "Medical Services",
@@ -62,6 +49,20 @@ const services = [
     title: "Plumber Services",
     description: "Hire professional plumbers for household repairs.",
     link: "/plumber",
+    isPremium: true
+  },
+  {
+    icon: "fas fa-shopping-cart",
+    title: "Buy Pre-Owned Stationery",
+    description: "Purchase second-hand books, notes, and accessories.",
+    link: "/products",
+    isPremium: true
+  },
+  {
+    icon: "fas fa-handshake",
+    title: "Sell Pre-Owned Stationery",
+    description: "Sell used stationery and educational materials easily.",
+    link: "/sell-products",
     isPremium: true
   },
 ];

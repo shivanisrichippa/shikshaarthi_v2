@@ -31,7 +31,7 @@
 
 
 
-
+//mess-service/src/controllers/mess.controller.js
 const mongoose = require('mongoose');
 
 const messSchema = new mongoose.Schema({
@@ -55,6 +55,11 @@ const messSchema = new mongoose.Schema({
         type: { type: String, enum: ['Point'], required: true },
         coordinates: { type: [Number], required: true }
     },
+  //   verificationStatus: { 
+  //     type: String, 
+  //     enum: ['pending', 'verified', 'rejected'], 
+  //     default: 'pending' 
+  // },
 }, { 
   timestamps: true, 
   collection: 'mess_data_submissions' 
