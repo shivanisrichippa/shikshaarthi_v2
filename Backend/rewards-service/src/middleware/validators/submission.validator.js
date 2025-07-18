@@ -50,6 +50,9 @@ const submissionRules = () => [
   body('data.price').if((v, { req }) => req.body.serviceType === 'mess').exists({ checkFalsy: true }).withMessage('Price is required for Mess.').isString().trim().isLength({ min: 1, max: 70 }),
   body('data.messType').if((v, { req }) => req.body.serviceType === 'mess').exists({ checkFalsy: true }).withMessage('Mess type is required.').isIn(['Pure Veg', 'Pure Non-Veg', 'Both Veg and Non-Veg']),
   body('data.holderName').if((v, { req }) => req.body.serviceType === 'mess').exists({ checkFalsy: true }).withMessage('Owner name is required for Mess.').isString().isLength({ min: 2, max: 100 }),
+// ====================== ADD THIS VALIDATION RULE ======================
+body('data.timing').if((v, { req }) => req.body.serviceType === 'mess').exists({ checkFalsy: true }).withMessage('Mess timings are required.').isString().trim().isLength({ min: 5, max: 100 }),
+// =======================================================================
 
   // Rental Service
   body('data.type').if((v, { req }) => req.body.serviceType === 'rental').exists({ checkFalsy: true }).withMessage('Property type is required.').isString().isIn(['PG', 'Hostel', 'Apartment', 'Shared Room', 'House', 'Flat', '1BHK', '2BHK', '1RK', 'Single Room']),
