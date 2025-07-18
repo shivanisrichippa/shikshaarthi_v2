@@ -90,7 +90,19 @@ const laundryDataSchema = new mongoose.Schema({
     cloudinaryId: { type: String, required: true },
     label: { type: String } // To store which type of image it is (Outside Image, Inside Image, etc.)
   }],
-  
+    
+  // =======================================================================
+  // THE FIX: Enabled the location field so it can be saved with submissions.
+  // =======================================================================
+  location: {
+    type: {
+        type: String,
+        enum: ['Point'],
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+    }
+  },
   // Optional: Location data for future use
   // location: {
   //   type: { type: String, enum: ['Point'], default: 'Point' },

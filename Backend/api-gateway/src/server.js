@@ -18,12 +18,17 @@ const REWARDS_SERVICE_URL = process.env.REWARDS_SERVICE_URL || 'http://localhost
 const RENTAL_SERVICE_URL = process.env.RENTAL_SERVICE_URL || 'http://localhost:3003';
 // At the top, with other service URLs
 const MESS_SERVICE_URL = process.env.MESS_SERVICE_URL || 'http://localhost:3004';
+// At the top, with other service URLs
+const MEDICAL_SERVICE_URL = process.env.MEDICAL_SERVICE_URL || 'http://localhost:3005';
+
 
 console.log(`[Gateway] AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}`);
 console.log(`[Gateway] REWARDS_SERVICE_URL: ${REWARDS_SERVICE_URL}`);
 
 // With other console logs
 console.log(`[Gateway] MESS_SERVICE_URL: ${MESS_SERVICE_URL}`);
+// With other console logs
+console.log(`[Gateway] MEDICAL_SERVICE_URL: ${MEDICAL_SERVICE_URL}`);
 
 // CORS configuration
 app.use(cors({
@@ -165,7 +170,8 @@ const rentalServiceProxy = createProxyMiddleware(createProxyOptions(RENTAL_SERVI
 // With other proxy instances
 const messServiceProxy = createProxyMiddleware(createProxyOptions(MESS_SERVICE_URL, 'Mess Service'));
 // --- ROUTING RULES ---
-
+// With other proxy instances
+const medicalServiceProxy = createProxyMiddleware(createProxyOptions(MEDICAL_SERVICE_URL, 'Medical Service'));
 // Auth service routes
 app.use('/api/auth', (req, res, next) => {
   console.log(`[Gateway] 🔐 Routing ${req.method} ${req.originalUrl} to Auth Service`);
@@ -196,6 +202,14 @@ app.use('/api/mess', (req, res, next) => {
   console.log(`[Gateway] 🍖 Routing ${req.method} ${req.originalUrl} to Mess Service`);
   messServiceProxy(req, res, next);
 });
+
+// With other routing rules
+app.use('/api/medical', (req, res, next) => {
+  console.log(`[Gateway] ⚕️  Routing ${req.method} ${req.originalUrl} to Medical Service`);
+  medicalServiceProxy(req, res, next);
+});
+
+
 // 404 Handler for unmatched routes
 app.use((req, res) => {
   console.log(`[Gateway] ❓ Route not found: ${req.method} ${req.originalUrl}`);
