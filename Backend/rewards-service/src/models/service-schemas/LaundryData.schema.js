@@ -1,3 +1,4 @@
+// Backend/rewards-service/src/models/service-schemas/LaundryData.schema.js
 const mongoose = require('mongoose');
 
 const laundryDataSchema = new mongoose.Schema({
@@ -87,13 +88,16 @@ const laundryDataSchema = new mongoose.Schema({
     label: { type: String }
   }],
     
+  // =======================================================================
+  // FIXED: Added proper location field structure consistent with plumber service
+  // =======================================================================
   location: {
     type: {
         type: String,
         enum: ['Point'],
     },
     coordinates: {
-        type: [Number],
+        type: [Number], // [longitude, latitude]
     }
   },
 
@@ -106,6 +110,11 @@ const laundryDataSchema = new mongoose.Schema({
     default: 'pending' 
   },
   
+  // =======================================================================
+  // ADDED: isActive field to match plumber service
+  // =======================================================================
+  isActive: { type: Boolean, default: true }
+  
 }, {
   timestamps: true,
   collection: 'laundry_data_submissions'
@@ -116,6 +125,8 @@ laundryDataSchema.index({ district: 1, state: 1, pincode: 1 });
 laundryDataSchema.index({ serviceType: 1 });
 laundryDataSchema.index({ laundryType: 1 });
 laundryDataSchema.index({ mobile: 1 });
+laundryDataSchema.index({ verificationStatus: 1 });
+laundryDataSchema.index({ location: '2dsphere' });
 
 // Pre-save middleware to calculate totalAmount
 laundryDataSchema.pre('save', function(next) {
