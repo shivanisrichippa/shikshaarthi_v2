@@ -16,9 +16,14 @@ const PORT = process.env.PORT || 3000;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const REWARDS_SERVICE_URL = process.env.REWARDS_SERVICE_URL || 'http://localhost:3002';
 const RENTAL_SERVICE_URL = process.env.RENTAL_SERVICE_URL || 'http://localhost:3003';
+// At the top, with other service URLs
+const MESS_SERVICE_URL = process.env.MESS_SERVICE_URL || 'http://localhost:3004';
 
 console.log(`[Gateway] AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}`);
 console.log(`[Gateway] REWARDS_SERVICE_URL: ${REWARDS_SERVICE_URL}`);
+
+// With other console logs
+console.log(`[Gateway] MESS_SERVICE_URL: ${MESS_SERVICE_URL}`);
 
 // CORS configuration
 app.use(cors({
@@ -157,6 +162,8 @@ const createProxyOptions = (target, serviceName) => ({
 const authServiceProxy = createProxyMiddleware(createProxyOptions(AUTH_SERVICE_URL, 'Auth Service'));
 const rewardsServiceProxy = createProxyMiddleware(createProxyOptions(REWARDS_SERVICE_URL, 'Rewards Service'));
 const rentalServiceProxy = createProxyMiddleware(createProxyOptions(RENTAL_SERVICE_URL, 'Rewards Service'));
+// With other proxy instances
+const messServiceProxy = createProxyMiddleware(createProxyOptions(MESS_SERVICE_URL, 'Mess Service'));
 // --- ROUTING RULES ---
 
 // Auth service routes
@@ -184,6 +191,11 @@ app.use('/api/rentals', (req, res, next) => {
 });
 
 
+// With other routing rules
+app.use('/api/mess', (req, res, next) => {
+  console.log(`[Gateway] 🍖 Routing ${req.method} ${req.originalUrl} to Mess Service`);
+  messServiceProxy(req, res, next);
+});
 // 404 Handler for unmatched routes
 app.use((req, res) => {
   console.log(`[Gateway] ❓ Route not found: ${req.method} ${req.originalUrl}`);
